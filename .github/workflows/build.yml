@@ -57,7 +57,7 @@ jobs:
         EOT
 
         # 4. DOWNLOAD Real Hardware Headers (Android 13 Version)
-        # Using a known stable tag for Pixel 4a (Android 13)
+        # These downloaded successfully in the last run, so we keep them.
         HW_BASE="https://raw.githubusercontent.com/aosp-mirror/platform_hardware_libhardware/android-13.0.0_r1/include/hardware"
         
         echo "Downloading hardware headers..."
@@ -66,9 +66,11 @@ jobs:
         wget -O aosp_headers/libhardware/include/hardware/camera3.h "$HW_BASE/camera3.h"
         
         # 5. Patch camera_metadata.h
-        # Using the matching Android 13 system media repo
-        MEDIA_BASE="https://raw.githubusercontent.com/aosp-mirror/platform_system_media/android-13.0.0_r1/camera/include/system"
+        # SWITCHING TO ANDROID 11 for this file to avoid 404 errors.
+        # The struct definitions are compatible.
+        MEDIA_BASE="https://raw.githubusercontent.com/aosp-mirror/platform_system_media/android-11.0.0_r28/camera/include/system"
         
+        echo "Downloading metadata headers..."
         wget -O aosp_headers/system/media/camera/include/system/camera_metadata.h "$MEDIA_BASE/camera_metadata.h"
 
         # Apply surgical patch to remove the broken include
