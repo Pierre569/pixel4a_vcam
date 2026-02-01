@@ -72,10 +72,14 @@ jobs:
         wget -O aosp_headers/system/media/camera/include/system/camera_metadata_tags.h "$MEDIA_BASE/camera_metadata_tags.h"
         wget -O aosp_headers/system/media/camera/include/system/camera_vendor_tags.h "$MEDIA_BASE/camera_vendor_tags.h"
         
-        # --- NEW DOWNLOAD: camera.h ---
-        wget -O aosp_headers/system/media/camera/include/system/camera.h "$MEDIA_BASE/camera.h"
+        # 6. DOWNLOAD System Core Headers (For camera.h)
+        # This lives in 'android_system_core', not 'android_system_media'
+        CORE_BASE="https://raw.githubusercontent.com/LineageOS/android_system_core/lineage-18.1/include/system"
+        
+        echo "Downloading camera.h from System Core..."
+        wget -O aosp_headers/system/media/camera/include/system/camera.h "$CORE_BASE/camera.h"
 
-        # 6. SURGICAL PATCH (The Fix for ANDROID_API)
+        # 7. SURGICAL PATCH (The Fix for ANDROID_API)
         TARGET_FILE="aosp_headers/system/media/camera/include/system/camera_metadata.h"
         
         # Remove the broken include
@@ -105,4 +109,30 @@ jobs:
     - name: Package Magisk Module
       run: |
         mkdir -p magisk_module/system/bin
-        mkdir -p magisk_module/system/ve
+        mkdir -p magisk_module/system/vendor/lib64/hw
+        
+        if [ -f build/libcamera.qcom.vcam.so ]; then
+            cp build/libcamera.qcom.vcam.so magisk_module/system/vendor/lib64/hw/camera.qcom.vcam.so
+        fi
+        
+        if [ -f build/cameraserver_proxy ]; then
+            cp build/cameraserver_proxy magisk_module/system/bin/vcam_receiver
+        fi
+        
+        find . -name "*.apk" -exec cp {} magisk_module/VCam_Controller.apk \;
+        
+        cd magisk_module
+        zip -r ../VCam_Magisk_Module.zip .
+        cd ..
+
+    - name: Upload Magisk Module
+      uses: actions/upload-artifact@v4
+      with:
+        name: VCam_Magisk_Module
+        path: VCam_Magisk_Module.zip
+
+    - name: Upload Companion App
+      uses: actions/upload-artifact@v4
+      with:
+        name: VCam_Controller_APK
+        path: magisk_module/VCam_Controller.apk
