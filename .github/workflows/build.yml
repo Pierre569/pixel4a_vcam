@@ -27,53 +27,120 @@ jobs:
       with:
         ndk-version: r25b
 
-    - name: Prepare Headers (Mocks & Downloads)
+    - name: Create Directories and Mocks
       run: |
-        # 1. Create Folder Structure
         mkdir -p aosp_headers/cutils
         mkdir -p aosp_headers/system
         mkdir -p aosp_headers/libhardware/include/hardware
         mkdir -p aosp_headers/system/media/camera/include/system
         
-        # 2. Mock 'native_handle.h' (FIXED: Added buffer_handle_t)
-        cat <<EOT >> aosp_headers/cutils/native_handle.h
-        #ifndef NATIVE_HANDLE_H
-        #define NATIVE_HANDLE_H
-        typedef struct native_handle {
-            int version;
-            int numFds;
-            int numInts;
-            int data[0];
-        } native_handle_t;
-        typedef const native_handle_t* buffer_handle_t;
-        #endif
-        EOT
+        # Mock native_handle.h (With buffer_handle_t)
+        echo "#ifndef NATIVE_HANDLE_H" > aosp_headers/cutils/native_handle.h
+        echo "#define NATIVE_HANDLE_H" >> aosp_headers/cutils/native_handle.h
+        echo "typedef struct native_handle { int version; int numFds; int numInts; int data[0]; } native_handle_t;" >> aosp_headers/cutils/native_handle.h
+        echo "typedef const native_handle_t* buffer_handle_t;" >> aosp_headers/cutils/native_handle.h
+        echo "#endif" >> aosp_headers/cutils/native_handle.h
 
-        # 3. Mock 'camera_metadata_hidden.h'
-        cat <<EOT >> aosp_headers/system/camera_metadata_hidden.h
-        #ifndef SYSTEM_CAMERA_METADATA_HIDDEN_H
-        #define SYSTEM_CAMERA_METADATA_HIDDEN_H
-        // Empty mock
-        #endif
-        EOT
+        # Mock camera_metadata_hidden.h
+        echo "// Empty mock" > aosp_headers/system/camera_metadata_hidden.h
 
-        # 4. DOWNLOAD Real Hardware Headers (AOSP Mirror - Android 13)
-        HW_BASE="https://raw.githubusercontent.com/aosp-mirror/platform_hardware_libhardware/android-13.0.0_r1/include/hardware"
+        # Smart-Mock Graphics Headers (Define types as int)
+        GRAPHICS_MOCK="aosp_headers/system/media/camera/include/system/graphics-base-v1.0.h"
+        echo "#ifndef GRAPHICS_BASE_V1_0_H" > $GRAPHICS_MOCK
+        echo "#define GRAPHICS_BASE_V1_0_H" >> $GRAPHICS_MOCK
+        echo "#include <stdint.h>" >> $GRAPHICS_MOCK
+        echo "typedef int32_t android_pixel_format_t;" >> $GRAPHICS_MOCK
+        echo "typedef int32_t android_transform_t;" >> $GRAPHICS_MOCK
+        echo "typedef int32_t android_dataspace_t;" >> $GRAPHICS_MOCK
+        echo "typedef int32_t android_color_mode_t;" >> $GRAPHICS_MOCK
+        echo "typedef int32_t android_color_transform_t;" >> $GRAPHICS_MOCK
+        echo "typedef int32_t android_hdr_t;" >> $GRAPHICS_MOCK
+        echo "#endif" >> $GRAPHICS_MOCK
+
+        touch aosp_headers/system/media/camera/include/system/graphics-base-v1.1.h
+        touch aosp_headers/system/media/camera/include/system/graphics-base-v1.2.h
+
+    - name: Download AOSP Headers
+      run: |
+        # Using full URLs to avoid variable quote errors
         
-        echo "Downloading hardware headers..."
-        wget -O aosp_headers/libhardware/include/hardware/hardware.h "$HW_BASE/hardware.h"
-        wget -O aosp_headers/libhardware/include/hardware/camera_common.h "$HW_BASE/camera_common.h"
-        wget -O aosp_headers/libhardware/include/hardware/camera3.h "$HW_BASE/camera3.h"
-        wget -O aosp_headers/libhardware/include/hardware/gralloc.h "$HW_BASE/gralloc.h"
-        wget -O aosp_headers/libhardware/include/hardware/fb.h "$HW_BASE/fb.h"
+        # Hardware Headers (Android 13)
+        wget -O aosp_headers/libhardware/include/hardware/hardware.h https://raw.githubusercontent.com/aosp-mirror/platform_hardware_libhardware/android-13.0.0_r1/include/hardware/hardware.h
+        wget -O aosp_headers/libhardware/include/hardware/camera_common.h https://raw.githubusercontent.com/aosp-mirror/platform_hardware_libhardware/android-13.0.0_r1/include/hardware/camera_common.h
+        wget -O aosp_headers/libhardware/include/hardware/camera3.h https://raw.githubusercontent.com/aosp-mirror/platform_hardware_libhardware/android-13.0.0_r1/include/hardware/camera3.h
+        wget -O aosp_headers/libhardware/include/hardware/gralloc.h https://raw.githubusercontent.com/aosp-mirror/platform_hardware_libhardware/android-13.0.0_r1/include/hardware/gralloc.h
+        wget -O aosp_headers/libhardware/include/hardware/fb.h https://raw.githubusercontent.com/aosp-mirror/platform_hardware_libhardware/android-13.0.0_r1/include/hardware/fb.h
         
-        # 5. DOWNLOAD Metadata Headers (LineageOS Mirror - Android 11)
-        MEDIA_BASE="https://raw.githubusercontent.com/LineageOS/android_system_media/lineage-18.1/camera/include/system"
+        # Metadata Headers (LineageOS 18.1)
+        wget -O aosp_headers/system/media/camera/include/system/camera_metadata.h https://raw.githubusercontent.com/LineageOS/android_system_media/lineage-18.1/camera/include/system/camera_metadata.h
+        wget -O aosp_headers/system/media/camera/include/system/camera_metadata_tags.h https://raw.githubusercontent.com/LineageOS/android_system_media/lineage-18.1/camera/include/system/camera_metadata_tags.h
+        wget -O aosp_headers/system/media/camera/include/system/camera_vendor_tags.h https://raw.githubusercontent.com/LineageOS/android_system_media/lineage-18.1/camera/include/system/camera_vendor_tags.h
         
-        echo "Downloading metadata headers..."
-        wget -O aosp_headers/system/media/camera/include/system/camera_metadata.h "$MEDIA_BASE/camera_metadata.h"
-        wget -O aosp_headers/system/media/camera/include/system/camera_metadata_tags.h "$MEDIA_BASE/camera_metadata_tags.h"
-        wget -O aosp_headers/system/media/camera/include/system/camera_vendor_tags.h "$MEDIA_BASE/camera_vendor_tags.h"
+        # System Core Headers (LineageOS 18.1)
+        wget -O aosp_headers/system/media/camera/include/system/camera.h https://raw.githubusercontent.com/LineageOS/android_system_core/lineage-18.1/libsystem/include/system/camera.h
+        wget -O aosp_headers/system/media/camera/include/system/graphics.h https://raw.githubusercontent.com/LineageOS/android_system_core/lineage-18.1/libsystem/include/system/graphics.h
+        wget -O aosp_headers/system/media/camera/include/system/graphics-base.h https://raw.githubusercontent.com/LineageOS/android_system_core/lineage-18.1/libsystem/include/system/graphics-base.h
+        wget -O aosp_headers/system/media/camera/include/system/graphics-sw.h https://raw.githubusercontent.com/LineageOS/android_system_core/lineage-18.1/libsystem/include/system/graphics-sw.h
         
-        # 6. DOWNLOAD System Core Headers (LineageOS 18.1)
-        CORE_BASE="https://raw.githubusercontent.com/Lineag
+        # Window Header (LineageOS 18.1 Frameworks Native)
+        wget -O aosp_headers/system/media/camera/include/system/window.h https://raw.githubusercontent.com/LineageOS/android_frameworks_native/lineage-18.1/libs/nativewindow/include/system/window.h
+
+    - name: Patch Code and Headers
+      run: |
+        # Patch camera_metadata.h (Fix cutils include and definitions)
+        TARGET_FILE="aosp_headers/system/media/camera/include/system/camera_metadata.h"
+        sed -i '/#include <cutils\/compiler.h>/d' $TARGET_FILE
+        sed -i '1i #ifndef ANDROID_API\n#define ANDROID_API\n#endif\n#ifndef CC_LIKELY\n#define CC_LIKELY( exp )  (__builtin_expect( !!(exp), 1 ))\n#define CC_UNLIKELY( exp )  (__builtin_expect( !!(exp), 0 ))\n#endif\n' $TARGET_FILE
+        
+        # Patch wrapper code (Comment out conflicting definition)
+        # Using a simpler sed command to avoid quote nesting issues
+        if [ -f "src/vcam_wrapper.cpp" ]; then
+            sed -i 's/extern "C" struct hw_module_t HAL_MODULE_INFO_SYM;/\/\/ extern "C" struct hw_module_t HAL_MODULE_INFO_SYM;/' src/vcam_wrapper.cpp
+        fi
+
+    - name: Build Native Components (C++)
+      run: |
+        mkdir -p build
+        cd build
+        cmake -DANDROID_NDK=${{ steps.setup-ndk.outputs.ndk-path }} \
+              -DCMAKE_TOOLCHAIN_FILE=${{ steps.setup-ndk.outputs.ndk-path }}/build/cmake/android.toolchain.cmake \
+              -DANDROID_ABI=arm64-v8a \
+              -DANDROID_PLATFORM=android-30 \
+              -DCMAKE_BUILD_TYPE=Release \
+              ..
+        make
+
+    - name: Build Companion App (APK)
+      run: |
+        gradle assembleRelease --no-daemon
+
+    - name: Package Magisk Module
+      run: |
+        mkdir -p magisk_module/system/bin
+        mkdir -p magisk_module/system/vendor/lib64/hw
+        
+        if [ -f build/libcamera.qcom.vcam.so ]; then
+            cp build/libcamera.qcom.vcam.so magisk_module/system/vendor/lib64/hw/camera.qcom.vcam.so
+        fi
+        
+        if [ -f build/cameraserver_proxy ]; then
+            cp build/cameraserver_proxy magisk_module/system/bin/vcam_receiver
+        fi
+        
+        find . -name "*.apk" -exec cp {} magisk_module/VCam_Controller.apk \;
+        
+        cd magisk_module
+        zip -r ../VCam_Magisk_Module.zip .
+        cd ..
+
+    - name: Upload Magisk Module
+      uses: actions/upload-artifact@v4
+      with:
+        name: VCam_Magisk_Module
+        path: VCam_Magisk_Module.zip
+
+    - name: Upload Companion App
+      uses: actions/upload-artifact@v4
+      with:
+        name: VCam_Controller_APK
+        path: magisk_module/VCam_Controller.apk
