@@ -16,6 +16,8 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/aosp_headers/libhardware/include
     ${CMAKE_CURRENT_SOURCE_DIR}/aosp_headers/system/media/camera/include
     ${CMAKE_CURRENT_SOURCE_DIR}/aosp_headers/frameworks/av/include
+    # Mock Headers for libcutils
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_cutils
 )
 
 # Shared Libraries (Receiver)
