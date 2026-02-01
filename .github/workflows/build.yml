@@ -71,15 +71,17 @@ jobs:
         wget -O aosp_headers/system/media/camera/include/system/camera_metadata.h "$MEDIA_BASE/camera_metadata.h"
         wget -O aosp_headers/system/media/camera/include/system/camera_metadata_tags.h "$MEDIA_BASE/camera_metadata_tags.h"
         wget -O aosp_headers/system/media/camera/include/system/camera_vendor_tags.h "$MEDIA_BASE/camera_vendor_tags.h"
+        
+        # --- NEW DOWNLOAD: camera.h ---
+        wget -O aosp_headers/system/media/camera/include/system/camera.h "$MEDIA_BASE/camera.h"
 
-        # 6. SURGICAL PATCH (The Fix)
+        # 6. SURGICAL PATCH (The Fix for ANDROID_API)
         TARGET_FILE="aosp_headers/system/media/camera/include/system/camera_metadata.h"
         
         # Remove the broken include
         sed -i '/#include <cutils\/compiler.h>/d' $TARGET_FILE
         
-        # Inject missing definitions (CC_LIKELY and ANDROID_API)
-        # We define ANDROID_API as empty so the compiler ignores it.
+        # Inject missing definitions
         sed -i '1i #ifndef ANDROID_API\n#define ANDROID_API\n#endif\n#ifndef CC_LIKELY\n#define CC_LIKELY( exp )  (__builtin_expect( !!(exp), 1 ))\n#define CC_UNLIKELY( exp )  (__builtin_expect( !!(exp), 0 ))\n#endif\n' $TARGET_FILE
         
         echo "Headers ready."
@@ -103,30 +105,4 @@ jobs:
     - name: Package Magisk Module
       run: |
         mkdir -p magisk_module/system/bin
-        mkdir -p magisk_module/system/vendor/lib64/hw
-        
-        if [ -f build/libcamera.qcom.vcam.so ]; then
-            cp build/libcamera.qcom.vcam.so magisk_module/system/vendor/lib64/hw/camera.qcom.vcam.so
-        fi
-        
-        if [ -f build/cameraserver_proxy ]; then
-            cp build/cameraserver_proxy magisk_module/system/bin/vcam_receiver
-        fi
-        
-        find . -name "*.apk" -exec cp {} magisk_module/VCam_Controller.apk \;
-        
-        cd magisk_module
-        zip -r ../VCam_Magisk_Module.zip .
-        cd ..
-
-    - name: Upload Magisk Module
-      uses: actions/upload-artifact@v4
-      with:
-        name: VCam_Magisk_Module
-        path: VCam_Magisk_Module.zip
-
-    - name: Upload Companion App
-      uses: actions/upload-artifact@v4
-      with:
-        name: VCam_Controller_APK
-        path: magisk_module/VCam_Controller.apk
+        mkdir -p magisk_module/system/ve
