@@ -72,9 +72,9 @@ jobs:
         wget -O aosp_headers/system/media/camera/include/system/camera_metadata_tags.h "$MEDIA_BASE/camera_metadata_tags.h"
         wget -O aosp_headers/system/media/camera/include/system/camera_vendor_tags.h "$MEDIA_BASE/camera_vendor_tags.h"
         
-        # 6. DOWNLOAD System Core Headers (For camera.h)
-        # This lives in 'android_system_core', not 'android_system_media'
-        CORE_BASE="https://raw.githubusercontent.com/LineageOS/android_system_core/lineage-18.1/include/system"
+        # 6. DOWNLOAD System Core Headers (Corrected Path)
+        # It lives in 'libsystem/include/system'
+        CORE_BASE="https://raw.githubusercontent.com/LineageOS/android_system_core/lineage-18.1/libsystem/include/system"
         
         echo "Downloading camera.h from System Core..."
         wget -O aosp_headers/system/media/camera/include/system/camera.h "$CORE_BASE/camera.h"
