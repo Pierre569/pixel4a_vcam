@@ -75,19 +75,25 @@ jobs:
         # 6. DOWNLOAD System Core Headers (LineageOS 18.1)
         CORE_BASE="https://raw.githubusercontent.com/LineageOS/android_system_core/lineage-18.1/libsystem/include/system"
         
-        echo "Downloading system headers..."
+        echo "Downloading camera.h and graphics.h..."
         wget -O aosp_headers/system/media/camera/include/system/camera.h "$CORE_BASE/camera.h"
         wget -O aosp_headers/system/media/camera/include/system/graphics.h "$CORE_BASE/graphics.h"
         wget -O aosp_headers/system/media/camera/include/system/graphics-base.h "$CORE_BASE/graphics-base.h"
-        wget -O aosp_headers/system/media/camera/include/system/window.h "$CORE_BASE/window.h"
 
-        # --- NEW DOWNLOADS: Graphics Version Headers ---
-        # These are included by graphics-base.h
-        wget -O aosp_headers/system/media/camera/include/system/graphics-base-v1.0.h "$CORE_BASE/graphics-base-v1.0.h"
-        wget -O aosp_headers/system/media/camera/include/system/graphics-base-v1.1.h "$CORE_BASE/graphics-base-v1.1.h"
-        wget -O aosp_headers/system/media/camera/include/system/graphics-base-v1.2.h "$CORE_BASE/graphics-base-v1.2.h"
+        # 7. DOWNLOAD Window Header (LineageOS 18.1 Frameworks Native)
+        # This is where window.h actually lives
+        NATIVE_BASE="https://raw.githubusercontent.com/LineageOS/android_frameworks_native/lineage-18.1/libs/nativewindow/include/system"
+        
+        echo "Downloading window.h..."
+        wget -O aosp_headers/system/media/camera/include/system/window.h "$NATIVE_BASE/window.h"
 
-        # 7. SURGICAL PATCH (The Fix for ANDROID_API)
+        # 8. MOCK Graphics Version Headers
+        # These are usually hard to find raw, so we create empty mocks to satisfy the includes.
+        touch aosp_headers/system/media/camera/include/system/graphics-base-v1.0.h
+        touch aosp_headers/system/media/camera/include/system/graphics-base-v1.1.h
+        touch aosp_headers/system/media/camera/include/system/graphics-base-v1.2.h
+
+        # 9. SURGICAL PATCH (The Fix for ANDROID_API)
         TARGET_FILE="aosp_headers/system/media/camera/include/system/camera_metadata.h"
         
         sed -i '/#include <cutils\/compiler.h>/d' $TARGET_FILE
