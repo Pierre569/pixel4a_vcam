@@ -10,11 +10,11 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/un.h>
 #include <time.h>
 #include <unistd.h>
 #include <vector>
-
 
 // Android Log Stub for NDK (or link generic)
 #ifdef __ANDROID__
