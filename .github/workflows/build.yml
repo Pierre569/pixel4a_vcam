@@ -56,20 +56,22 @@ jobs:
         #endif
         EOT
 
-        # 4. DOWNLOAD Real Hardware Headers (The Fix for camera3.h)
-        BASE_URL="https://raw.githubusercontent.com/aosp-mirror/platform_hardware_libhardware/android-11.0.0_r28/include/hardware"
+        # 4. DOWNLOAD Real Hardware Headers (Android 13 Version)
+        # Using a known stable tag for Pixel 4a (Android 13)
+        HW_BASE="https://raw.githubusercontent.com/aosp-mirror/platform_hardware_libhardware/android-13.0.0_r1/include/hardware"
         
         echo "Downloading hardware headers..."
-        wget -q -O aosp_headers/libhardware/include/hardware/hardware.h $BASE_URL/hardware.h
-        wget -q -O aosp_headers/libhardware/include/hardware/camera_common.h $BASE_URL/camera_common.h
-        wget -q -O aosp_headers/libhardware/include/hardware/camera3.h $BASE_URL/camera3.h
+        wget -O aosp_headers/libhardware/include/hardware/hardware.h "$HW_BASE/hardware.h"
+        wget -O aosp_headers/libhardware/include/hardware/camera_common.h "$HW_BASE/camera_common.h"
+        wget -O aosp_headers/libhardware/include/hardware/camera3.h "$HW_BASE/camera3.h"
         
-        # 5. Patch camera_metadata.h (Fixing the cutils compiler error)
-        # First, ensure the file exists (we mock it if missing, but usually download is better)
-        # Let's download the real one too to be safe
-        wget -q -O aosp_headers/system/media/camera/include/system/camera_metadata.h https://raw.githubusercontent.com/aosp-mirror/platform_system_media/android-11.0.0_r28/camera/include/system/camera_metadata.h
+        # 5. Patch camera_metadata.h
+        # Using the matching Android 13 system media repo
+        MEDIA_BASE="https://raw.githubusercontent.com/aosp-mirror/platform_system_media/android-13.0.0_r1/camera/include/system"
+        
+        wget -O aosp_headers/system/media/camera/include/system/camera_metadata.h "$MEDIA_BASE/camera_metadata.h"
 
-        # Now apply the surgical patch to remove the broken include
+        # Apply surgical patch to remove the broken include
         TARGET_FILE="aosp_headers/system/media/camera/include/system/camera_metadata.h"
         sed -i '/#include <cutils\/compiler.h>/d' $TARGET_FILE
         sed -i '1i #ifndef CC_LIKELY\n#define CC_LIKELY( exp )  (__builtin_expect( !!(exp), 1 ))\n#define CC_UNLIKELY( exp )  (__builtin_expect( !!(exp), 0 ))\n#endif\n' $TARGET_FILE
