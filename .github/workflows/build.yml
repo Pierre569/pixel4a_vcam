@@ -22,9 +22,10 @@ jobs:
           cache: gradle
 
       - name: Setup Android NDK
+        id: setup-ndk
         uses: android-actions/setup-android@v3
 
-      - name: Install NDK
+      - name: Install NDK & CMake
         run: sdkmanager --install "ndk;25.2.9519653" "cmake;3.22.1"
 
       - name: Fetch AOSP Headers
@@ -38,7 +39,13 @@ jobs:
           git clone --depth 1 https://android.googlesource.com/platform/frameworks/av -b android-13.0.0_r1 aosp_headers/frameworks/av
 
       - name: Build Native Components (C++)
+        env:
+          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: |
+          # Explicitly set NDK Home if not set by action (fallback to standard path)
+          export ANDROID_NDK_HOME=${ANDROID_NDK_HOME:-/usr/local/lib/android/sdk/ndk/25.2.9519653}
+          echo "Using NDK at: $ANDROID_NDK_HOME"
+
           mkdir build
           cd build
           cmake -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake \
@@ -53,9 +60,8 @@ jobs:
       - name: Build Companion App (APK)
         working-directory: ./VCamController
         run: |
-          # Use global gradle since wrapper is not committed
-          # Generate Debug Keystore for Release build (or use debug build)
-          # We'll use debug for simplicity as "Release" without keys fails signing
+          # Usage of global gradle to avoid missing wrapper issues
+          # Using assembleDebug to avoid Release signing failures on CI
           gradle assembleDebug
           mv app/build/outputs/apk/debug/app-debug.apk ../VCamController.apk
 
