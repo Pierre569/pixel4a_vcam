@@ -69,15 +69,18 @@ jobs:
         
         echo "Downloading metadata headers..."
         wget -O aosp_headers/system/media/camera/include/system/camera_metadata.h "$MEDIA_BASE/camera_metadata.h"
-        
-        # --- NEW DOWNLOADS ---
         wget -O aosp_headers/system/media/camera/include/system/camera_metadata_tags.h "$MEDIA_BASE/camera_metadata_tags.h"
         wget -O aosp_headers/system/media/camera/include/system/camera_vendor_tags.h "$MEDIA_BASE/camera_vendor_tags.h"
 
-        # 6. Apply surgical patch to remove the broken include
+        # 6. SURGICAL PATCH (The Fix)
         TARGET_FILE="aosp_headers/system/media/camera/include/system/camera_metadata.h"
+        
+        # Remove the broken include
         sed -i '/#include <cutils\/compiler.h>/d' $TARGET_FILE
-        sed -i '1i #ifndef CC_LIKELY\n#define CC_LIKELY( exp )  (__builtin_expect( !!(exp), 1 ))\n#define CC_UNLIKELY( exp )  (__builtin_expect( !!(exp), 0 ))\n#endif\n' $TARGET_FILE
+        
+        # Inject missing definitions (CC_LIKELY and ANDROID_API)
+        # We define ANDROID_API as empty so the compiler ignores it.
+        sed -i '1i #ifndef ANDROID_API\n#define ANDROID_API\n#endif\n#ifndef CC_LIKELY\n#define CC_LIKELY( exp )  (__builtin_expect( !!(exp), 1 ))\n#define CC_UNLIKELY( exp )  (__builtin_expect( !!(exp), 0 ))\n#endif\n' $TARGET_FILE
         
         echo "Headers ready."
 
