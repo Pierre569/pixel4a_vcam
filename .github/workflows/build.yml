@@ -32,11 +32,10 @@ jobs:
         # 1. Create Folder Structure
         mkdir -p aosp_headers/cutils
         mkdir -p aosp_headers/system
-        mkdir -p aosp_headers/log
         mkdir -p aosp_headers/libhardware/include/hardware
         mkdir -p aosp_headers/system/media/camera/include/system
         
-        # 2. Mock 'native_handle.h' (With buffer_handle_t)
+        # 2. Mock 'native_handle.h'
         cat <<EOT >> aosp_headers/cutils/native_handle.h
         #ifndef NATIVE_HANDLE_H
         #define NATIVE_HANDLE_H
@@ -50,7 +49,7 @@ jobs:
         #endif
         EOT
 
-        # 3. Mock 'liblog' (Redirects system logs to NDK logs)
+        # 3. Mock 'liblog'
         cat <<EOT >> aosp_headers/log/log.h
         #ifndef _LIBS_LOG_LOG_H
         #define _LIBS_LOG_LOG_H
@@ -74,7 +73,7 @@ jobs:
         #endif
         EOT
 
-        # 5. DOWNLOAD Real Hardware Headers (AOSP Mirror - Android 13)
+        # 5. DOWNLOAD Real Hardware Headers (Android 13)
         HW_BASE="https://raw.githubusercontent.com/aosp-mirror/platform_hardware_libhardware/android-13.0.0_r1/include/hardware"
         
         echo "Downloading hardware headers..."
@@ -84,7 +83,7 @@ jobs:
         wget -O aosp_headers/libhardware/include/hardware/gralloc.h "$HW_BASE/gralloc.h"
         wget -O aosp_headers/libhardware/include/hardware/fb.h "$HW_BASE/fb.h"
         
-        # 6. DOWNLOAD Metadata Headers (LineageOS Mirror - Android 11)
+        # 6. DOWNLOAD Metadata Headers (LineageOS 11)
         MEDIA_BASE="https://raw.githubusercontent.com/LineageOS/android_system_media/lineage-18.1/camera/include/system"
         
         echo "Downloading metadata headers..."
@@ -140,6 +139,12 @@ jobs:
               -DCMAKE_BUILD_TYPE=Release \
               ..
         make
+
+    # --- NEW STEP: Setup Stable Gradle Version ---
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v3
+      with:
+        gradle-version: '8.4'
 
     - name: Build Companion App (APK)
       run: |
