@@ -54,8 +54,9 @@ jobs:
                 ..
           cmake --build .
           # Move artifacts to root for zipping
-          cp src/cameraserver_proxy ../cameraserver_proxy
-          cp src/libcamera.qcom.vcam.so ../libvcam_wrapper.so || cp src/libvcam_wrapper.so ../libvcam_wrapper.so
+          # Artifacts are in the current build dir, not src/
+          cp cameraserver_proxy ../cameraserver_proxy
+          cp libcamera.qcom.vcam.so ../libvcam_wrapper.so
 
       - name: Build Companion App (APK)
         working-directory: ./VCamController
