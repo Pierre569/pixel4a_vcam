@@ -72,20 +72,21 @@ jobs:
         wget -O aosp_headers/system/media/camera/include/system/camera_metadata_tags.h "$MEDIA_BASE/camera_metadata_tags.h"
         wget -O aosp_headers/system/media/camera/include/system/camera_vendor_tags.h "$MEDIA_BASE/camera_vendor_tags.h"
         
-        # 6. DOWNLOAD System Core Headers (Corrected Path)
-        # It lives in 'libsystem/include/system'
+        # 6. DOWNLOAD System Core Headers (LineageOS 18.1)
         CORE_BASE="https://raw.githubusercontent.com/LineageOS/android_system_core/lineage-18.1/libsystem/include/system"
         
-        echo "Downloading camera.h from System Core..."
+        echo "Downloading system headers..."
         wget -O aosp_headers/system/media/camera/include/system/camera.h "$CORE_BASE/camera.h"
+        wget -O aosp_headers/system/media/camera/include/system/graphics.h "$CORE_BASE/graphics.h"
+        
+        # Preemptively downloading these because graphics.h usually needs them
+        wget -O aosp_headers/system/media/camera/include/system/graphics-base.h "$CORE_BASE/graphics-base.h" || echo "graphics-base not found, skipping"
+        wget -O aosp_headers/system/media/camera/include/system/window.h "$CORE_BASE/window.h" || echo "window.h not found, skipping"
 
         # 7. SURGICAL PATCH (The Fix for ANDROID_API)
         TARGET_FILE="aosp_headers/system/media/camera/include/system/camera_metadata.h"
         
-        # Remove the broken include
         sed -i '/#include <cutils\/compiler.h>/d' $TARGET_FILE
-        
-        # Inject missing definitions
         sed -i '1i #ifndef ANDROID_API\n#define ANDROID_API\n#endif\n#ifndef CC_LIKELY\n#define CC_LIKELY( exp )  (__builtin_expect( !!(exp), 1 ))\n#define CC_UNLIKELY( exp )  (__builtin_expect( !!(exp), 0 ))\n#endif\n' $TARGET_FILE
         
         echo "Headers ready."
