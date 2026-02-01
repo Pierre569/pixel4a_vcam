@@ -1,0 +1,7 @@
+id=pixel4a_vcam
+name=Pixel 4a Virtual Camera
+version=1.0
+versionCode=1
+author=Antigravity
+description=Pixel 4a Virtual Camera HAL Wrapper with OBS Injection and Preview
+zygisk=1
