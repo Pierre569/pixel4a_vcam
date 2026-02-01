@@ -12,17 +12,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: "17"
           distribution: "temurin"
           cache: gradle
 
       - name: Setup Android NDK
-        uses: android-actions/setup-android@v2
+        uses: android-actions/setup-android@v3
 
       - name: Install NDK
         run: sdkmanager --install "ndk;25.2.9519653" "cmake;3.22.1"
@@ -76,19 +76,19 @@ jobs:
           cd ..
 
       - name: Upload Magisk Module
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: VCam_Magisk_Module
           path: pixel4a_vcam_magisk.zip
 
       - name: Upload Companion App
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: VCam_Controller_APK
           path: VCamController.apk
 
       - name: Upload PC Tools
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: PC_Tools
           path: start_stream.bat
