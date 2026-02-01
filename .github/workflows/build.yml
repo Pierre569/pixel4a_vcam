@@ -27,7 +27,7 @@ jobs:
       with:
         ndk-version: r25b
 
-    - name: Prepare Headers (Mocks & Downloads)
+    - name: Prepare Headers
       run: |
         # 1. Create Folder Structure
         mkdir -p aosp_headers/cutils
@@ -56,16 +56,17 @@ jobs:
         #endif
         EOT
 
-        # 4. DOWNLOAD Real Hardware Headers (AOSP Mirror - Android 13)
+        # 4. DOWNLOAD Real Hardware Headers (Android 13)
         HW_BASE="https://raw.githubusercontent.com/aosp-mirror/platform_hardware_libhardware/android-13.0.0_r1/include/hardware"
         
         echo "Downloading hardware headers..."
         wget -O aosp_headers/libhardware/include/hardware/hardware.h "$HW_BASE/hardware.h"
         wget -O aosp_headers/libhardware/include/hardware/camera_common.h "$HW_BASE/camera_common.h"
         wget -O aosp_headers/libhardware/include/hardware/camera3.h "$HW_BASE/camera3.h"
-        
-        # --- NEW DOWNLOAD: gralloc.h ---
         wget -O aosp_headers/libhardware/include/hardware/gralloc.h "$HW_BASE/gralloc.h"
+        
+        # --- NEW DOWNLOAD: fb.h ---
+        wget -O aosp_headers/libhardware/include/hardware/fb.h "$HW_BASE/fb.h"
         
         # 5. DOWNLOAD Metadata Headers (LineageOS Mirror - Android 11)
         MEDIA_BASE="https://raw.githubusercontent.com/LineageOS/android_system_media/lineage-18.1/camera/include/system"
@@ -84,14 +85,11 @@ jobs:
         wget -O aosp_headers/system/media/camera/include/system/graphics-base.h "$CORE_BASE/graphics-base.h"
         wget -O aosp_headers/system/media/camera/include/system/graphics-sw.h "$CORE_BASE/graphics-sw.h"
 
-        # 7. DOWNLOAD Window Header (LineageOS 18.1 Frameworks Native)
+        # 7. DOWNLOAD Window Header (LineageOS 18.1)
         NATIVE_BASE="https://raw.githubusercontent.com/LineageOS/android_frameworks_native/lineage-18.1/libs/nativewindow/include/system"
         wget -O aosp_headers/system/media/camera/include/system/window.h "$NATIVE_BASE/window.h"
 
-        # 8. SMART-MOCK Graphics Version Headers (The Fix)
-        # Instead of empty files, we define the missing types as standard integers.
-        # This tricks the compiler perfectly.
-        
+        # 8. SMART-MOCK Graphics Version Headers
         cat <<EOT >> aosp_headers/system/media/camera/include/system/graphics-base-v1.0.h
         #ifndef GRAPHICS_BASE_V1_0_H
         #define GRAPHICS_BASE_V1_0_H
@@ -105,11 +103,10 @@ jobs:
         #endif
         EOT
 
-        # Create empty mocks for 1.1 and 1.2 as they usually just extend 1.0
         touch aosp_headers/system/media/camera/include/system/graphics-base-v1.1.h
         touch aosp_headers/system/media/camera/include/system/graphics-base-v1.2.h
 
-        # 9. SURGICAL PATCH (The Fix for ANDROID_API)
+        # 9. SURGICAL PATCH
         TARGET_FILE="aosp_headers/system/media/camera/include/system/camera_metadata.h"
         
         sed -i '/#include <cutils\/compiler.h>/d' $TARGET_FILE
@@ -146,20 +143,4 @@ jobs:
             cp build/cameraserver_proxy magisk_module/system/bin/vcam_receiver
         fi
         
-        find . -name "*.apk" -exec cp {} magisk_module/VCam_Controller.apk \;
-        
-        cd magisk_module
-        zip -r ../VCam_Magisk_Module.zip .
-        cd ..
-
-    - name: Upload Magisk Module
-      uses: actions/upload-artifact@v4
-      with:
-        name: VCam_Magisk_Module
-        path: VCam_Magisk_Module.zip
-
-    - name: Upload Companion App
-      uses: actions/upload-artifact@v4
-      with:
-        name: VCam_Controller_APK
-        path: magisk_module/VCam_Controller.apk
+        find . -n
